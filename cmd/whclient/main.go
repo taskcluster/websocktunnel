@@ -206,7 +206,10 @@ func makeConfigurer(clientID, accessToken, certificate string) func() (whclient.
 			AccessToken: accessToken,
 			Certificate: certificate,
 		}
-		myAuth := auth.New(creds)
+		myAuth, err := auth.New(creds)
+		if err != nil {
+			return whclient.Config{}, err
+		}
 		whtResponse, err := myAuth.WebhooktunnelToken()
 		if err != nil {
 			return whclient.Config{}, err
