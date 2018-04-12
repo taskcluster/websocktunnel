@@ -44,24 +44,12 @@ func main() {
 	}
 
 	// Load secrets
-	signingSecretA := os.Getenv("TASKCLUSTER_PROXY_SECRET_A")
-	signingSecretB := os.Getenv("TASKCLUSTER_PROXY_SECRET_B")
+	signingSecretA := os.Getenv("SECRET_A")
+	signingSecretB := os.Getenv("SECRET_B")
 
-	// Load TLS certificates
-	useTLS := true
-	domainHosted := true
-	tlsKeyEnc := os.Getenv("TLS_KEY")
-	tlsCertEnc := os.Getenv("TLS_CERTIFICATE")
-
-	tlsKey, _ := base64.StdEncoding.DecodeString(tlsKeyEnc)
-	tlsCert, _ := base64.StdEncoding.DecodeString(tlsCertEnc)
-	cert, err := tls.X509KeyPair([]byte(tlsCert), []byte(tlsKey))
-	if err != nil {
-		logger.Error(err.Error())
-		useTLS = false
-		// assume tls * cert
-		domainHosted = false
-	}
+	// Load config
+	useTLS := os.Getenv("USE_TLS") != ""
+	domainHosted := os.Getenv("DOMAIN_HOSTED") != ""
 
 	//load port
 	port := os.Getenv("PORT")
@@ -102,6 +90,18 @@ func main() {
 
 	// create tls config and serve
 	if useTLS {
+		// Load TLS certificates
+		tlsKeyEnc := os.Getenv("TLS_KEY")
+		tlsCertEnc := os.Getenv("TLS_CERTIFICATE")
+
+		tlsKey, _ := base64.StdEncoding.DecodeString(tlsKeyEnc)
+		tlsCert, _ := base64.StdEncoding.DecodeString(tlsCertEnc)
+		cert, err := tls.X509KeyPair([]byte(tlsCert), []byte(tlsKey))
+		if err != nil {
+			logger.Error(err.Error())
+			os.Exit(1)
+		}
+
 		config := &tls.Config{
 			Certificates: []tls.Certificate{cert},
 		}
@@ -112,8 +112,7 @@ func main() {
 		}
 		_ = server.Serve(listener)
 	} else {
-		err = server.ListenAndServe()
-		if err != nil {
+		if err := server.ListenAndServe(); err != nil {
 			panic(err)
 		}
 	}

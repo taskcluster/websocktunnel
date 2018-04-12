@@ -86,7 +86,8 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.Host, p.domain) {
 		s := strings.TrimPrefix(r.URL.RequestURI(), "/")
 		index := strings.Index(s, "/")
-		id, path := "", "/"
+		var id string
+		path := "/"
 		if index < 0 {
 			id = s
 		} else {
@@ -180,7 +181,7 @@ func (p *proxy) register(w http.ResponseWriter, r *http.Request, id, tokenString
 	p.logf(id, r.RemoteAddr, "requesting client registration")
 	if tokenString == "" {
 		// No jwt. Connection not authorized
-		p.logerrorf(id, r.RemoteAddr, "could not retreive auth token")
+		p.logerrorf(id, r.RemoteAddr, "could not retrieve auth token")
 		http.Error(w, http.StatusText(400), 400)
 		return
 	}
@@ -221,7 +222,7 @@ func (p *proxy) register(w http.ResponseWriter, r *http.Request, id, tokenString
 	header := make(http.Header)
 
 	urlScheme := "http://"
-	if p.tls {
+	if p.tls || r.Header.Get("X-Forwarded-Proto") == "https" {
 		urlScheme = "https://"
 	}
 
@@ -336,8 +337,8 @@ func (p *proxy) serveRequest(w http.ResponseWriter, r *http.Request, id string, 
 	// flusher may not be implemented by a ResponseWriter wrapper
 	// simple copy
 	if !ok {
-		n, err := io.Copy(w, resp.Body)
-		p.logf(id, r.RemoteAddr, "data transfered over request: %d bytes, error: %v", n, err)
+		n, cerr := io.Copy(w, resp.Body)
+		p.logf(id, r.RemoteAddr, "data transferred over request: %d bytes, error: %v", n, cerr)
 		// log here
 		return
 	}
@@ -345,7 +346,7 @@ func (p *proxy) serveRequest(w http.ResponseWriter, r *http.Request, id string, 
 	p.logf(id, r.RemoteAddr, "streaming http")
 	wf := &threadSafeWriteFlusher{w: w, f: flusher}
 	n, err := copyAndFlush(wf, resp.Body, 100*time.Millisecond)
-	p.logf(id, r.RemoteAddr, "data transfered over request: %d bytes, error: %v", n, err)
+	p.logf(id, r.RemoteAddr, "data transferred over request: %d bytes, error: %v", n, err)
 }
 
 // validate jwt

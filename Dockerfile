@@ -6,10 +6,10 @@ WORKDIR /go/src/github.com/taskcluster/
 RUN git clone http://github.com/taskcluster/webhooktunnel
 WORKDIR /go/src/github.com/taskcluster/webhooktunnel
 
-# set envs 
+# set envs
 ENV HOSTNAME=tcproxy.dev
-ENV TASKCLUSTER_PROXY_SECRET_A=example-secret
-ENV TASKCLUSTER_PROXY_SECRET_B=another-example-secret
+ENV SECRET_A=example-secret
+ENV SECRET_B=another-example-secret
 
 RUN go get -v
 ENTRYPOINT ["go", "run", "main.go"]
