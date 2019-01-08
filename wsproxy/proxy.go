@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/websocket"
 	"github.com/taskcluster/websocktunnel/util"
 	"github.com/taskcluster/websocktunnel/wsmux"
@@ -221,7 +221,7 @@ func (p *proxy) register(w http.ResponseWriter, r *http.Request, id, tokenString
 				p.onSessionRemove(id)
 			}
 		},
-		// Log: p.logger,
+		Log: p.logger,
 	}
 
 	p.pool[id] = wsmux.Server(conn, conf)
